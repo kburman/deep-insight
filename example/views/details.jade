@@ -1,0 +1,50 @@
+style.
+	body {
+		padding: 50px;
+		font: 16px "Helvetica Neue", Helvetica;
+	}
+
+
+h1= cid
+
+if doc.agent_name
+	h4= "Agent Name"
+	table
+		for x in doc.agent_name
+			tr
+				td= x
+
+if doc.vendor_classid
+	h4= "Vendor Class ID"
+	table
+		for x in doc.vendor_classid
+			tr
+				td= x
+
+if doc.ua
+	h4= "User Agents"
+	table
+		for x in doc.ua
+			tr
+				td= x
+
+if doc.websites
+	h4= "Web sites"
+	table
+		for x in doc.websites
+			tr
+				td= x
+
+
+if doc.urls
+	h4= "web pages"
+	table
+		for x in doc.urls
+			if x
+				tr
+				td= x.date
+				td= x.method
+				td= x.url
+				td= x.respcode
+				td= x.ua
+
