@@ -20,11 +20,15 @@ and web UI is presented with express, jade
 we don't support GUI we support WEB UI
 as it is portable and cross platform and can be accessed from any other device
 
-*for analysing file run collector*
-'node collector.js'
+**for analysing file run collector**
+'''
+node collector.js
+'''
 
-*for runing web UI*
-'node web_app.js'
+**for runing web UI**
+'''
+node web_app.js
+'''
 
 
 
