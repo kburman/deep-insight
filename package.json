@@ -1,16 +1,17 @@
 {
-  "name": "insight",
-  "version": "0.0.0",
-  "description": "it is a packet anaylsis tool but with goal of providing you information about users instead of packet.",
-  "main": "index.js",
-  "author": "Kshitij Burman (kburman6@gmail.com)",
-  "license": "MIT",
+  "name": "deep-insight.1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "view/index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "memorystream": "^0.3.1",
-    "cheerio": "^0.19.0",
-    "nedb": "^1.1.2",
-    "express": "^4.13.1",
-    "morgan": "^1.6.1",
-    "jade": "^1.11.0"
+    "cheerio": "0.19.0",
+    "string": "3.3.1",
+    "underscore": "^1.8.3",
+    "xml2js": "^0.4.15"
   }
 }
