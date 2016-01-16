@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>deep-insight</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-flat.min.css" rel="stylesheet">
+    <style media="screen">
+        #graph {
+          background-color: gray;
+          width: 88%;
+          height: 42em;
+          margin-left: 5%;
+        }
+
+        body {
+          background-color: white;
+        }
+
+
+
+
+
+      rect {
+        fill: none;
+        pointer-events: all;
+      }
+
+      .cursor {
+        fill: none;
+        stroke: brown;
+        pointer-events: none;
+      }
+
+      .link {
+        stroke: #999;
+      }
+
+
+
+
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">deep-insight</a>
+      </div>
+
+      <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="#">Flow Graph <span class="sr-only">(current)</span></a></li>
+          <li><a href="#">About</a></li>
+        </ul>
+      </div>
+    </div>
+    </nav>
+    <div class="">
+      <span id="packetcount">Packet Count : 0</span>
+    </div>
+    <div id="graph">
+
+    </div>
+
+
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/d3.min.js"></script>
+    <script src="js/underscore-min.js"></script>
+
+    <script type="text/javascript">
+        var width = 700
+        var height = 600
+        var force = d3.layout.force()
+                        .size([width, height])
+                        .nodes([{mac_addr:'test'}], function (d) { return d.mac_addr})
+                        .gravity(0.5)
+                        .distance(100)
+                        .charge(-300)
+                        .on("tick", force_tick)
+
+        var svg = d3.select("#graph").append("svg")
+                    .attr("height", "100%")
+                    .attr("width", "100%")
+
+        svg.append("rect").attr("height", height).attr("width", width)
+        var nodes = force.nodes()
+        var links = force.links()
+        var node = svg.selectAll(".node")
+        var link = svg.selectAll(".link")
+
+        function force_tick() {
+            link.attr("x1", function (d) {var tmp = d.source.x; return _.isNaN(tmp)? 0: tmp})
+            link.attr("x2", function (d) {var tmp = d.target.x; return _.isNaN(tmp)? 0: tmp})
+            link.attr("y1", function (d) {var tmp = d.source.y; return _.isNaN(tmp)? 0: tmp})
+            link.attr("y2", function (d) {var tmp = d.target.y; return _.isNaN(tmp)? 0: tmp})
+
+            node.attr("cx", function (d) {var tmp = d.x; return _.isNaN(tmp)? 0: tmp})
+            node.attr("cy", function (d) {var tmp = d.y; return _.isNaN(tmp)? 0: tmp})
+        }
+
+        function _restart() {
+            link = link.data(links)
+
+            link.enter().insert("line", ".node")
+                    .attr("class", "link")
+            node = node.data(nodes, function (d) { return d.mac_addr})
+            node.enter().insert("circle", ".cursor")
+                .attr("class", "node")
+                .attr("r", function (d) {
+                  return d.AP ? 20 : 10
+                })
+                .attr("fill", function (d) {
+                  return d.AP ? "#002AFF" : "black"
+                })
+                .call(force.drag)
+                .on('click', function (d) {
+                  d3.select(this).select("circle").style("stroke-width", 4)
+                  d.fixed = true
+                })
+            force.start()
+        }
+
+        var restart = _.throttle(_restart, 1000)
+
+        function addNode(node) {
+          if (!_.findWhere(nodes, {mac_addr: node.mac_addr})) {
+            nodes.push(node)
+            restart()
+          }
+        }
+
+        function addLink(src_mac, dst_mac) {
+            var src = _.findWhere(nodes, {mac_addr: src_mac})
+            var dst = _.findWhere(nodes, {mac_addr: dst_mac})
+            if ((src && dst) && !(_.findWhere(links, {source: src, target: dst}))) {
+                links.push({
+                    source: src,
+                    target: dst
+                })
+                restart()
+            }
+        }
+
+
+        function start_task() {
+          const tshark = require('../src/tsharkprocess.js')
+          const Pdml2packet = require('../src/pdml2packet.js')
+          const Extractor = require('../src/parser.js')
+
+          var preprocessor = new Pdml2packet()
+          var extractor = new Extractor()
+          var pcount = 0
+          console.log('starting')
+
+          var tsharkp = tshark({interface: 'mon0'})
+          tsharkp.stdout.pipe(preprocessor)
+
+          extractor.nodeGraph.on('new:node', function (node) {
+            addNode(node)
+          }).on('new:link', function (val) {
+            addLink(val.src, val.dst)
+          }).on('attr:AP', function (arg) {
+            var obj = _.findWhere(nodes, {mac_addr: arg.mac_addr})
+            if (obj) {
+              obj.AP = true
+            }
+          })
+
+          var pc = 0
+          preprocessor.on('data', function (packet) {
+            extractor.processPacket(packet)
+            pc++
+            $("#packetcount").text("Packet Count : " + pc)
+          })
+
+          console.log("processing")
+        }
+
+        start_task()
+
+
+    </script>
+  </body>
+</html>
